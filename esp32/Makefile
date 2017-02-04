@@ -32,8 +32,8 @@ ESPCOMP = $(ESPIDF)/components
 ESPTOOL ?= $(ESPCOMP)/esptool_py/esptool/esptool.py
 
 # verify the ESP IDF version
-ESPIDF_SUPHASH := 8615dbd486ef123876662a5664b3527a24daa92e
-ESPIDF_CURHASH := $(shell cd $(ESPIDF) && git show --pretty=format:'%H')
+ESPIDF_SUPHASH := 0a678ebe8c8bb78053f2a2dc4bd26124adde9122
+ESPIDF_CURHASH := $(shell git -C $(ESPIDF) show --pretty=format:'%H')
 ifneq ($(ESPIDF_CURHASH),$(ESPIDF_SUPHASH))
 $(info ** WARNING **)
 $(info The git hash of ESP IDF does not match the supported version)
@@ -42,6 +42,9 @@ $(info ESP IDF path:       $(ESPIDF))
 $(info Current git hash:   $(ESPIDF_CURHASH))
 $(info Supported git hash: $(ESPIDF_SUPHASH))
 endif
+
+# pretty format of ESP IDF version, used internally by the IDF
+IDF_VER := $(shell git -C $(ESPIDF) describe)
 
 INC += -I.
 INC += -I..
@@ -84,6 +87,8 @@ INC += -I$(ESPCOMP)/tcpip_adapter/include
 INC += -I/xfer/nubcore/esp-idf/components/esp32
 
 CFLAGS = -std=gnu99 -Os -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -mlongcalls -nostdlib -Wall -Werror -Wno-error=unused-function -Wno-error=unused-but-set-variable -Wno-error=unused-variable -Wno-error=deprecated-declarations -DMBEDTLS_CONFIG_FILE='"mbedtls/esp_config.h"' -DHAVE_CONFIG_H -DESP_PLATFORM  $(INC)
+CFLAGS += -DIDF_VER=\"$(IDF_VER)\"
+CFLAGS += $(CFLAGS_MOD)
 
 # this is what ESPIDF uses for c++ compilation
 CXXFLAGS = -std=gnu++11 -fno-exceptions -fno-rtti -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -mlongcalls -nostdlib -Wall -Werror -Wno-error=unused-function -Wno-error=unused-but-set-variable -Wno-error=unused-variable -Wno-error=deprecated-declarations -DESP_PLATFORM $(INC)
@@ -157,14 +162,13 @@ LIB_SRC_C = $(addprefix lib/,\
 	netutils/netutils.c \
 	timeutils/timeutils.c \
 	utils/pyexec.c \
-	utils/pyhelp.c \
 	utils/interrupt_char.c \
 	)
 
 ifeq ($(MICROPY_FATFS), 1)
 LIB_SRC_C += \
-	lib/fatfs/ff.c \
-	lib/fatfs/option/ccsbcs.c
+	lib/oofatfs/ff.c \
+	lib/oofatfs/option/unicode.c
 endif
 
 DRIVERS_SRC_C = $(addprefix drivers/,\
@@ -476,6 +480,9 @@ ESPIDF_MBEDTLS_O = $(addprefix $(ESPCOMP)/mbedtls/,\
 	port/net.o \
 	port/esp_bignum.o \
 	port/esp_hardware.o \
+	port/esp_sha1.o \
+	port/esp_sha256.o \
+	port/esp_sha512.o \
 	)
 
 $(BUILD)/$(ESPCOMP)/wpa_supplicant/%.o: CFLAGS += -DEMBEDDED_SUPP -D__ets__ -Wno-strict-aliasing

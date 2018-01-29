@@ -180,11 +180,13 @@ SRC_C = \
 	network_lan.c \
 	modsocket.c \
 	modesp.c \
+	modesp32.c \
 	moduhashlib.c \
 	espneopixel.c \
 	machine_hw_spi.c \
 	machine_wdt.c \
 	mpthreadport.c \
+	machine_rtc.c \
 	$(SRC_MOD)
 
 EXTMOD_SRC_C = $(addprefix extmod/,\
@@ -284,6 +286,7 @@ ESPIDF_ESP32_O = $(addprefix $(ESPCOMP)/esp32/,\
 	dport_access.o \
 	wifi_init.o \
 	wifi_internal.o \
+	sleep_modes.o \
 	)
 
 ESPIDF_HEAP_O = $(addprefix $(ESPCOMP)/heap/,\

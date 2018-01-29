@@ -1,14 +1,18 @@
-import sys
-import uerrno
 try:
-    import uos_vfs as uos
+    import uerrno
+    try:
+        import uos_vfs as uos
+    except ImportError:
+        import uos
 except ImportError:
-    import uos
+    print("SKIP")
+    raise SystemExit
+
 try:
     uos.VfsFat
 except AttributeError:
     print("SKIP")
-    sys.exit()
+    raise SystemExit
 
 class RAMFS_OLD:
 
@@ -38,7 +42,7 @@ try:
     bdev = RAMFS_OLD(50)
 except MemoryError:
     print("SKIP")
-    sys.exit()
+    raise SystemExit
 
 uos.VfsFat.mkfs(bdev)
 vfs = uos.VfsFat(bdev)
@@ -48,10 +52,10 @@ uos.mount(vfs, "/ramdisk")
 with vfs.open("file.txt", "w") as f:
     f.write("hello!")
 
-print(vfs.listdir())
+print(list(vfs.ilistdir()))
 
 with vfs.open("file.txt", "r") as f:
     print(f.read())
 
 vfs.remove("file.txt")
-print(vfs.listdir())
+print(list(vfs.ilistdir()))

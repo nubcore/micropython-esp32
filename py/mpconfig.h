@@ -1,5 +1,5 @@
 /*
- * This file is part of the Micro Python project, http://micropython.org/
+ * This file is part of the MicroPython project, http://micropython.org/
  *
  * The MIT License (MIT)
  *
@@ -23,8 +23,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef __MICROPY_INCLUDED_PY_MPCONFIG_H__
-#define __MICROPY_INCLUDED_PY_MPCONFIG_H__
+#ifndef MICROPY_INCLUDED_PY_MPCONFIG_H
+#define MICROPY_INCLUDED_PY_MPCONFIG_H
 
 // This file contains default configuration settings for MicroPython.
 // You can override any of the options below using mpconfigport.h file
@@ -32,7 +32,7 @@
 
 // mpconfigport.h is a file containing configuration settings for a
 // particular port. mpconfigport.h is actually a default name for
-// such config, and it can be overriden using MP_CONFIGFILE preprocessor
+// such config, and it can be overridden using MP_CONFIGFILE preprocessor
 // define (you can do that by passing CFLAGS_EXTRA='-DMP_CONFIGFILE="<file.h>"'
 // argument to make when using standard MicroPython makefiles).
 // This is useful to have more than one config per port, for example,
@@ -51,13 +51,13 @@
 /*****************************************************************************/
 /* Object representation                                                     */
 
-// A Micro Python object is a machine word having the following form:
+// A MicroPython object is a machine word having the following form:
 //  - xxxx...xxx1 : a small int, bits 1 and above are the value
 //  - xxxx...xx10 : a qstr, bits 2 and above are the value
 //  - xxxx...xx00 : a pointer to an mp_obj_base_t (unless a fake object)
 #define MICROPY_OBJ_REPR_A (0)
 
-// A Micro Python object is a machine word having the following form:
+// A MicroPython object is a machine word having the following form:
 //  - xxxx...xx01 : a small int, bits 2 and above are the value
 //  - xxxx...xx11 : a qstr, bits 2 and above are the value
 //  - xxxx...xxx0 : a pointer to an mp_obj_base_t (unless a fake object)
@@ -73,7 +73,6 @@
 // Str and float stored as O = R + 0x80800000, retrieved as R = O - 0x80800000.
 // This makes strs easier to encode/decode as they have zeros in the top 9 bits.
 // This scheme only works with 32-bit word size and float enabled.
-
 #define MICROPY_OBJ_REPR_C (2)
 
 // A MicroPython object is a 64-bit word having the following form (called R):
@@ -235,7 +234,7 @@
 #endif
 
 /*****************************************************************************/
-/* Micro Python emitters                                                     */
+/* MicroPython emitters                                                     */
 
 // Whether to support loading of persistent code
 #ifndef MICROPY_PERSISTENT_CODE_LOAD
@@ -353,6 +352,12 @@
 #define MICROPY_COMP_TRIPLE_TUPLE_ASSIGN (0)
 #endif
 
+// Whether to enable optimisation of: return a if b else c
+// Costs about 80 bytes (Thumb2) and saves 2 bytes of bytecode for each use
+#ifndef MICROPY_COMP_RETURN_IF_EXPR
+#define MICROPY_COMP_RETURN_IF_EXPR (0)
+#endif
+
 /*****************************************************************************/
 /* Internal debugging stuff                                                  */
 
@@ -368,11 +373,18 @@
 #define MICROPY_DEBUG_PRINTERS (0)
 #endif
 
+// Whether to enable all debugging outputs (it will be extremely verbose)
+#ifndef MICROPY_DEBUG_VERBOSE
+#define MICROPY_DEBUG_VERBOSE (0)
+#endif
+
 /*****************************************************************************/
 /* Optimisations                                                             */
 
 // Whether to use computed gotos in the VM, or a switch
 // Computed gotos are roughly 10% faster, and increase VM code size by a little
+// Note: enabling this will use the gcc-specific extensions of ranged designated
+// initialisers and addresses of labels, which are not part of the C99 standard.
 #ifndef MICROPY_OPT_COMPUTED_GOTO
 #define MICROPY_OPT_COMPUTED_GOTO (0)
 #endif
@@ -445,7 +457,7 @@
 #   endif
 #endif
 
-// Whether to provide the mp_kbd_exception object
+// Whether to provide the mp_kbd_exception object, and micropython.kbd_intr function
 #ifndef MICROPY_KBD_EXCEPTION
 #define MICROPY_KBD_EXCEPTION (0)
 #endif
@@ -521,6 +533,11 @@ typedef long long mp_longint_impl_t;
 #define MICROPY_WARNINGS (0)
 #endif
 
+// This macro is used when printing runtime warnings and errors
+#ifndef MICROPY_ERROR_PRINTER
+#define MICROPY_ERROR_PRINTER (&mp_plat_print)
+#endif
+
 // Float and complex implementation
 #define MICROPY_FLOAT_IMPL_NONE (0)
 #define MICROPY_FLOAT_IMPL_FLOAT (1)
@@ -548,12 +565,27 @@ typedef double mp_float_t;
 #define MICROPY_PY_BUILTINS_COMPLEX (MICROPY_PY_BUILTINS_FLOAT)
 #endif
 
+// Whether to provide a high-quality hash for float and complex numbers.
+// Otherwise the default is a very simple but correct hashing function.
+#ifndef MICROPY_FLOAT_HIGH_QUALITY_HASH
+#define MICROPY_FLOAT_HIGH_QUALITY_HASH (0)
+#endif
+
 // Enable features which improve CPython compatibility
 // but may lead to more code size/memory usage.
 // TODO: Originally intended as generic category to not
 // add bunch of once-off options. May need refactoring later
 #ifndef MICROPY_CPYTHON_COMPAT
 #define MICROPY_CPYTHON_COMPAT (1)
+#endif
+
+// Perform full checks as done by CPython. Disabling this
+// may produce incorrect results, if incorrect data is fed,
+// but should not lead to MicroPython crashes or similar
+// grave issues (in other words, only user app should be,
+// affected, not system).
+#ifndef MICROPY_FULL_CHECKS
+#define MICROPY_FULL_CHECKS (1)
 #endif
 
 // Whether POSIX-semantics non-blocking streams are supported
@@ -616,6 +648,16 @@ typedef double mp_float_t;
 #define MICROPY_USE_INTERNAL_PRINTF (1)
 #endif
 
+// Support for internal scheduler
+#ifndef MICROPY_ENABLE_SCHEDULER
+#define MICROPY_ENABLE_SCHEDULER (0)
+#endif
+
+// Maximum number of entries in the scheduler
+#ifndef MICROPY_SCHEDULER_DEPTH
+#define MICROPY_SCHEDULER_DEPTH (4)
+#endif
+
 // Support for generic VFS sub-system
 #ifndef MICROPY_VFS
 #define MICROPY_VFS (0)
@@ -635,6 +677,12 @@ typedef double mp_float_t;
 #define MICROPY_PY_DESCRIPTORS (0)
 #endif
 
+// Whether to support class __delattr__ and __setattr__ methods
+// This costs some code size and makes all del attrs and store attrs slow
+#ifndef MICROPY_PY_DELATTR_SETATTR
+#define MICROPY_PY_DELATTR_SETATTR (0)
+#endif
+
 // Support for async/await/async for/async with
 #ifndef MICROPY_PY_ASYNC_AWAIT
 #define MICROPY_PY_ASYNC_AWAIT (1)
@@ -648,6 +696,11 @@ typedef double mp_float_t;
 // Whether str object is proper unicode
 #ifndef MICROPY_PY_BUILTINS_STR_UNICODE
 #define MICROPY_PY_BUILTINS_STR_UNICODE (0)
+#endif
+
+// Whether to check for valid UTF-8 when converting bytes to str
+#ifndef MICROPY_PY_BUILTINS_STR_UNICODE_CHECK
+#define MICROPY_PY_BUILTINS_STR_UNICODE_CHECK (MICROPY_PY_BUILTINS_STR_UNICODE)
 #endif
 
 // Whether str.center() method provided
@@ -712,10 +765,26 @@ typedef double mp_float_t;
 #define MICROPY_PY_BUILTINS_TIMEOUTERROR (0)
 #endif
 
-// Whether to support complete set of special methods
-// for user classes, otherwise only the most used
+// Whether to support complete set of special methods for user
+// classes, or only the most used ones. "Inplace" methods are
+// controlled by MICROPY_PY_ALL_INPLACE_SPECIAL_METHODS below.
+// "Reverse" methods are controlled by
+// MICROPY_PY_REVERSE_SPECIAL_METHODS below.
 #ifndef MICROPY_PY_ALL_SPECIAL_METHODS
 #define MICROPY_PY_ALL_SPECIAL_METHODS (0)
+#endif
+
+// Whether to support all inplace arithmetic operarion methods
+// (__imul__, etc.)
+#ifndef MICROPY_PY_ALL_INPLACE_SPECIAL_METHODS
+#define MICROPY_PY_ALL_INPLACE_SPECIAL_METHODS (0)
+#endif
+
+// Whether to support reverse arithmetic operarion methods
+// (__radd__, etc.). Additionally gated by
+// MICROPY_PY_ALL_SPECIAL_METHODS.
+#ifndef MICROPY_PY_REVERSE_SPECIAL_METHODS
+#define MICROPY_PY_REVERSE_SPECIAL_METHODS (0)
 #endif
 
 // Whether to support compile function
@@ -754,9 +823,20 @@ typedef double mp_float_t;
 #define MICROPY_PY_BUILTINS_NOTIMPLEMENTED (0)
 #endif
 
+// Whether to provide the built-in input() function. The implementation of this
+// uses mp-readline, so can only be enabled if the port uses this readline.
+#ifndef MICROPY_PY_BUILTINS_INPUT
+#define MICROPY_PY_BUILTINS_INPUT (0)
+#endif
+
 // Whether to support min/max functions
 #ifndef MICROPY_PY_BUILTINS_MIN_MAX
 #define MICROPY_PY_BUILTINS_MIN_MAX (1)
+#endif
+
+// Support for calls to pow() with 3 integer arguments
+#ifndef MICROPY_PY_BUILTINS_POW3
+#define MICROPY_PY_BUILTINS_POW3 (0)
 #endif
 
 // Whether to provide the help function
@@ -844,6 +924,13 @@ typedef double mp_float_t;
 #define MICROPY_PY_IO (1)
 #endif
 
+// Whether to provide "uio.resource_stream()" function with
+// the semantics of CPython's pkg_resources.resource_stream()
+// (allows to access resources in frozen packages).
+#ifndef MICROPY_PY_IO_RESOURCE_STREAM
+#define MICROPY_PY_IO_RESOURCE_STREAM (0)
+#endif
+
 // Whether to provide "io.FileIO" class
 #ifndef MICROPY_PY_IO_FILEIO
 #define MICROPY_PY_IO_FILEIO (0)
@@ -890,6 +977,11 @@ typedef double mp_float_t;
 #define MICROPY_PY_SYS_EXIT (1)
 #endif
 
+// Whether to provide "sys.getsizeof" function
+#ifndef MICROPY_PY_SYS_GETSIZEOF
+#define MICROPY_PY_SYS_GETSIZEOF (0)
+#endif
+
 // Whether to provide sys.{stdin,stdout,stderr} objects
 #ifndef MICROPY_PY_SYS_STDFILES
 #define MICROPY_PY_SYS_STDFILES (0)
@@ -904,6 +996,11 @@ typedef double mp_float_t;
 // Whether to provide "uerrno" module
 #ifndef MICROPY_PY_UERRNO
 #define MICROPY_PY_UERRNO (0)
+#endif
+
+// Whether to provide the uerrno.errorcode dict
+#ifndef MICROPY_PY_UERRNO_ERRORCODE
+#define MICROPY_PY_UERRNO_ERRORCODE (1)
 #endif
 
 // Whether to provide "uselect" module (baremetal implementation)
@@ -936,6 +1033,12 @@ typedef double mp_float_t;
 // If not enabled then thread safety must be provided at the Python level
 #ifndef MICROPY_PY_THREAD_GIL
 #define MICROPY_PY_THREAD_GIL (MICROPY_PY_THREAD)
+#endif
+
+// Number of VM jump-loops to do before releasing the GIL.
+// Set this to 0 to disable the divisor.
+#ifndef MICROPY_PY_THREAD_GIL_VM_DIVISOR
+#define MICROPY_PY_THREAD_GIL_VM_DIVISOR (32)
 #endif
 
 // Extended modules
@@ -1006,6 +1109,8 @@ typedef double mp_float_t;
 
 #ifndef MICROPY_PY_USSL
 #define MICROPY_PY_USSL (0)
+// Whether to add finaliser code to ussl objects
+#define MICROPY_PY_USSL_FINALISER (0)
 #endif
 
 #ifndef MICROPY_PY_WEBSOCKET
@@ -1071,6 +1176,11 @@ typedef double mp_float_t;
 // object code analysis tools which don't support static symbols.
 #ifndef STATIC
 #define STATIC static
+#endif
+
+// Number of bytes in a word
+#ifndef BYTES_PER_WORD
+#define BYTES_PER_WORD (sizeof(mp_uint_t))
 #endif
 
 #define BITS_PER_BYTE (8)
@@ -1183,4 +1293,4 @@ typedef double mp_float_t;
 #define MP_UNLIKELY(x) __builtin_expect((x), 0)
 #endif
 
-#endif // __MICROPY_INCLUDED_PY_MPCONFIG_H__
+#endif // MICROPY_INCLUDED_PY_MPCONFIG_H

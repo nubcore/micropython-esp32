@@ -1,5 +1,5 @@
 /*
- * This file is part of the Micro Python project, http://micropython.org/
+ * This file is part of the MicroPython project, http://micropython.org/
  *
  * Original template for this file comes from:
  * Low level disk I/O module skeleton for FatFs, (C)ChaN, 2013
@@ -28,7 +28,7 @@
  */
 
 #include "py/mpconfig.h"
-#if MICROPY_VFS
+#if MICROPY_VFS && MICROPY_VFS_FAT
 
 #include <stdint.h>
 #include <stdio.h>
@@ -277,4 +277,4 @@ DRESULT disk_ioctl (
     }
 }
 
-#endif // MICROPY_VFS
+#endif // MICROPY_VFS && MICROPY_VFS_FAT

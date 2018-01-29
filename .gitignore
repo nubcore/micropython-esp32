@@ -9,7 +9,7 @@
 *.dis
 *.exe
 
-# Packages 
+# Packages
 ############
 
 # Logs and Databases
@@ -39,3 +39,7 @@ __pycache__/
 GNUmakefile
 makefile
 user.props
+
+# Generated rst files
+######################
+genrst/

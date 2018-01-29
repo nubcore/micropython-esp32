@@ -1,3 +1,8 @@
 # test printing debugging info when compiling
-import ure
+try:
+    import ure
+except ImportError:
+    print("SKIP")
+    raise SystemExit
+
 ure.compile('^a|b[0-9]\w$', ure.DEBUG)

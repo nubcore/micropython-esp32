@@ -1,7 +1,11 @@
 # tests for things that are not implemented, or have non-compliant behaviour
 
-import array
-import ustruct
+try:
+    import array
+    import ustruct
+except ImportError:
+    print("SKIP")
+    raise SystemExit
 
 # when super can't find self
 try:
@@ -34,18 +38,6 @@ try:
     print(1 in array.array('B', b'12'))
 except NotImplementedError:
     print('NotImplementedError')
-
-# should raise type error
-try:
-    print(set('12') >= '1')
-except TypeError:
-    print('TypeError')
-
-# should raise type error
-try:
-    print(set('12') <= '123')
-except TypeError:
-    print('TypeError')
 
 # uPy raises TypeError, shold be ValueError
 try:
